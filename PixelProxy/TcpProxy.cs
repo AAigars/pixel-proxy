@@ -136,15 +136,22 @@ namespace PixelProxy
 
             while (true)
             {
-                revBytes = clientStream.Read(buffer, 0, buffer.Length);
-                if (revBytes <= 0)
-                    continue;
+                try
+                {
+                    revBytes = clientStream.Read(buffer, 0, buffer.Length);
+                    if (revBytes <= 0)
+                        continue;
 
-                byte[] newBuffer = OnPacket(buffer, "Client");
-                if (newBuffer == buffer)
-                    serverStream.Write(buffer, 0, revBytes);
-                else
-                    serverStream.Write(newBuffer, 0, newBuffer.Length);
+                    byte[] newBuffer = OnPacket(buffer, "Client");
+                    if (newBuffer == buffer)
+                        serverStream.Write(buffer, 0, revBytes);
+                    else
+                        serverStream.Write(newBuffer, 0, newBuffer.Length);
+                }catch
+                {
+                    Server.Close();
+                    break;
+                }
             }
         }
 
@@ -155,15 +162,21 @@ namespace PixelProxy
 
             while (true)
             {
-                revBytes = serverStream.Read(buffer, 0, buffer.Length);
-                if (revBytes <= 0)
-                    continue;
+                try
+                {
+                    revBytes = serverStream.Read(buffer, 0, buffer.Length);
+                    if (revBytes <= 0)
+                        continue;
 
-                byte[] newBuffer = OnPacket(buffer, "Server");
-                if (newBuffer == buffer)
-                    clientStream.Write(buffer, 0, revBytes);
-                else
-                    clientStream.Write(newBuffer, 0, newBuffer.Length);
+                    byte[] newBuffer = OnPacket(buffer, "Server");
+                    if (newBuffer == buffer)
+                        clientStream.Write(buffer, 0, revBytes);
+                    else
+                        clientStream.Write(newBuffer, 0, newBuffer.Length);
+                }catch
+                {
+                    break;
+                }
             }
         }
     }
