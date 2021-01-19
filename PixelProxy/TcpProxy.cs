@@ -45,8 +45,8 @@ namespace PixelProxy
             NetworkStream serverStream = Server.GetStream();
             NetworkStream clientStream = client.GetStream();
 
-            new Task(() => OnClientPacket(client, clientStream, serverStream)).Start();
-            new Task(() => OnServerPacket(client, serverStream, clientStream)).Start();
+            new Task(() => OnClientPacket(clientStream, serverStream)).Start();
+            new Task(() => OnServerPacket(serverStream, clientStream)).Start();
         }
 
         private byte[] OnPacket(byte[] revBuffer, String from)
@@ -54,7 +54,15 @@ namespace PixelProxy
             // Remove padding and load the bson.
             byte[] data = new byte[revBuffer.Length - 4];
             Buffer.BlockCopy(revBuffer, 4, data, 0, data.Length);
-            BSONObject packets = SimpleBSON.Load(data);
+
+            BSONObject packets = null;
+            try
+            {
+                packets = SimpleBSON.Load(data);
+            }catch { }
+
+            if (packets == null || !packets.ContainsKey("mc"))
+                return revBuffer;
 
             // Modify the packet?
             Console.WriteLine(from + " ========================================================================================");
@@ -121,64 +129,41 @@ namespace PixelProxy
             }
         }
 
-        private void OnClientPacket(TcpClient client, NetworkStream clientStream, NetworkStream serverStream)
+        private void OnClientPacket(NetworkStream clientStream, NetworkStream serverStream)
         {
             byte[] buffer = new byte[4096];
             int revBytes;
 
             while (true)
             {
-                try
-                {
-                    revBytes = clientStream.Read(buffer, 0, buffer.Length);
-                    if (revBytes <= 0)
-                        continue;
+                revBytes = clientStream.Read(buffer, 0, buffer.Length);
+                if (revBytes <= 0)
+                    continue;
 
-                    // TODO: Fix this stupid solution for differentiating from msg packets.
-                    try
-                    {
-                        byte[] newBuffer = OnPacket(buffer, "Client");
-                        serverStream.Write(newBuffer, 0, newBuffer.Length);
-                    }
-                    catch
-                    {
-                        serverStream.Write(buffer, 0, revBytes);
-                    }
-                }catch
-                {
-                    break;
-                }
+                byte[] newBuffer = OnPacket(buffer, "Client");
+                if (newBuffer == buffer)
+                    serverStream.Write(buffer, 0, revBytes);
+                else
+                    serverStream.Write(newBuffer, 0, newBuffer.Length);
             }
         }
 
-        private void OnServerPacket(TcpClient client, NetworkStream serverStream, NetworkStream clientStream)
+        private void OnServerPacket(NetworkStream serverStream, NetworkStream clientStream)
         {
             byte[] buffer = new byte[4096];
             int revBytes;
 
             while (true)
             {
-                try
-                {
-                    revBytes = serverStream.Read(buffer, 0, buffer.Length);
-                    if (revBytes <= 0)
-                        continue;
+                revBytes = serverStream.Read(buffer, 0, buffer.Length);
+                if (revBytes <= 0)
+                    continue;
 
-                    // TODO: Fix this stupid solution for differentiating from msg packets.
-                    try
-                    {
-                        byte[] newBuffer = OnPacket(buffer, "Server");
-                        clientStream.Write(newBuffer, 0, newBuffer.Length);
-                    }
-                    catch
-                    {
-                        clientStream.Write(buffer, 0, revBytes);
-                    }
-                }
-                catch
-                {
-                    break;
-                }
+                byte[] newBuffer = OnPacket(buffer, "Server");
+                if (newBuffer == buffer)
+                    clientStream.Write(buffer, 0, revBytes);
+                else
+                    clientStream.Write(newBuffer, 0, newBuffer.Length);
             }
         }
     }
