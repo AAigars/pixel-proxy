@@ -13,4 +13,4 @@ Domain may change in the future for the server.
 # Todo
 - Implement a proper way for modifying incoming/outgoing packets.
 - Ability to have multiple clients connect to the proxy.
-- Fix my stupid solution for handling the exception on handling the packet.
+- <del>Fix my stupid solution for handling the exception on handling the packet.</del>
