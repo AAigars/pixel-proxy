@@ -12,7 +12,7 @@ namespace PixelProxy
 {
     class TcpProxy
     {
-        private String PIXEL_IP = "3.220.252.91";
+        private String PIXEL_IP = "44.194.163.69";
         private int PIXEL_PORT = 10001;
 
         private TcpListener Listener;
@@ -73,8 +73,8 @@ namespace PixelProxy
 
                 if (packet["ID"].stringValue == "OoIP")
                 {
-                    PIXEL_IP = (packet["IP"].stringValue == "prod.gamev70.portalworldsgame.com" ? "3.220.252.91" : packet["IP"].stringValue);
-                    packet["IP"] = "prod.gamev70.portalworldsgame.com";
+                    PIXEL_IP = (packet["IP"].stringValue == "prod.gamev81.portalworldsgame.com" ? "44.194.163.69" : packet["IP"].stringValue);
+                    packet["IP"] = "prod.gamev81.portalworldsgame.com";
                 }
             }
 
